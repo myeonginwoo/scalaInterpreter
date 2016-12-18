@@ -1,9 +1,75 @@
+import scala.io.Source
+
 /**
   * Created by Lazysoul on 2016. 12. 15..
   */
 object Main {
+
+  var ctype: scala.collection.mutable.MutableList[TknKind.Value] =
+    scala.collection.mutable.MutableList.fill(256)(TknKind.Others)
+  var token: Token = _
+  var ch = ' '
+  var c = 0
+  var ch0, num = 0
+
+  def initctype(): Unit = {
+    for (i <- '0' to '9') {
+      ctype(i) = TknKind.Digit
+    }
+
+    for (i <- 'A' to 'Z') {
+      ctype(i) = TknKind.Letter
+    }
+
+    for (i <- 'a' to 'z') {
+      ctype(i) = TknKind.Letter
+    }
+
+    ctype('(') = TknKind.Lparen
+    ctype(')') = TknKind.Rparen
+    ctype('<') = TknKind.Less
+    ctype('>') = TknKind.Great
+    ctype('+') = TknKind.Plus
+    ctype('-') = TknKind.Minus
+    ctype('*') = TknKind.Multi
+    ctype('/') = TknKind.Divi
+    ctype('_') = TknKind.Letter
+    ctype('=') = TknKind.Assign
+    ctype(',') = TknKind.Comma
+    ctype('>') = TknKind.DblQ
+  }
+
+  val keyWdTabl: List[KeyWord] = List(KeyWord("if", TknKind.If), KeyWord("else", TknKind.Else),
+    KeyWord("end", TknKind.End), KeyWord("print", TknKind.Print), KeyWord("(", TknKind.Lparen),
+    KeyWord(")", TknKind.Rparen), KeyWord("+", TknKind.Plus), KeyWord("-", TknKind.Minus),
+    KeyWord("*", TknKind.Multi), KeyWord("/", TknKind.Divi), KeyWord("=", TknKind.Assign),
+    KeyWord(",", TknKind.Comma), KeyWord("==", TknKind.Equal), KeyWord("!=", TknKind.NotEq),
+    KeyWord("<", TknKind.Less), KeyWord("<=", TknKind.LessEq), KeyWord(">", TknKind.Great),
+    KeyWord(">=", TknKind.GreatEq), KeyWord("", TknKind.END_list)
+  )
+
   def main(args: Array[String]): Unit = {
-    println("test")
-    println("test")
+    println("test   kind intVal")
+    initctype()
+
+    val source = Source.fromFile("files/test1.txt").toList
+
+    println(s"source : ${source}")
+
+    println(s"result : ${parse(source, List()).reverse.mkString("\n")}")
+  }
+
+  def parse(list: List[Char], acc: List[Token]): List[Token] = list match {
+    case List() => acc
+    case ' ' :: _ => parse(list.tail, acc)
+    case head :: _ => ctype(head) match {
+      case TknKind.Letter =>
+        val ident = list.takeWhile(char => (ctype(char) == TknKind.Letter) || (ctype(char) == TknKind.Digit))
+          .mkString("")
+        parse(list.drop(ident.length), Token(TknKind.Ident, ident.mkString("")) :: acc)
+      case TknKind.Digit =>
+        val num = list.takeWhile(ctype(_) == TknKind.Digit).mkString("")
+        parse(list.drop(num.length), Token(TknKind.IntNum, "", num.toInt) :: acc)
+    }
   }
 }
