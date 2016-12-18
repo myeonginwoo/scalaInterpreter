@@ -44,4 +44,31 @@ class InterpreterTest {
     assertEquals(Token(TknKind.Ident, "abc", 0), result(2))
     assertEquals(Token(TknKind.Ident, "d789", 0), result(3))
   }
+
+  @Test def plusTest: Unit = {
+    val testText: List[Char] = "asd = 12 + 3 == 20".toList
+    Main.initctype()
+    val result = Main.parse(testText, List()).reverse
+    assertEquals(Token(TknKind.Ident, "asd", 0), result(0))
+    assertEquals(Token(TknKind.Assign, "=", 0), result(1))
+    assertEquals(Token(TknKind.IntNum, "", 12), result(2))
+    assertEquals(Token(TknKind.Plus, "+", 0), result(3))
+    assertEquals(Token(TknKind.IntNum, "", 3), result(4))
+    assertEquals(Token(TknKind.Equal, "==", 0), result(5))
+    assertEquals(Token(TknKind.IntNum, "", 20), result(6))
+  }
+
+  @Test def ifTest: Unit = {
+    val testText: List[Char] = "asd = 12 + 3 == 20 if".toList
+    Main.initctype()
+    val result = Main.parse(testText, List()).reverse
+    assertEquals(Token(TknKind.Ident, "asd", 0), result(0))
+    assertEquals(Token(TknKind.Assign, "=", 0), result(1))
+    assertEquals(Token(TknKind.IntNum, "", 12), result(2))
+    assertEquals(Token(TknKind.Plus, "+", 0), result(3))
+    assertEquals(Token(TknKind.IntNum, "", 3), result(4))
+    assertEquals(Token(TknKind.Equal, "==", 0), result(5))
+    assertEquals(Token(TknKind.IntNum, "", 20), result(6))
+    assertEquals(Token(TknKind.If, "if", 0), result(7))
+  }
 }

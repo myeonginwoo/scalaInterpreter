@@ -52,30 +52,46 @@ object Main {
     println("test   kind intVal")
     initctype()
 
-    val source = Source.fromFile("files/test1.txt").toList
+    val source = Source.fromFile("files/test.txt").toList
 
-    println(s"source : ${source}")
+    println(s"source : ${source.mkString("")}")
 
     println(s"result : ${parse(source, List()).reverse.mkString("\n")}")
   }
 
   def parse(list: List[Char], acc: List[Token]): List[Token] = list match {
     case List() => acc
-    case ' ' :: _ => parse(list.tail, acc)
+    case ' ' :: _ | '\n' :: _ => parse(list.tail, acc)
     case head :: _ => ctype(head) match {
       case TknKind.Letter =>
-        val ident = list.takeWhile(char => (ctype(char) == TknKind.Letter) || (ctype(char) == TknKind.Digit))
+        val letters = list.takeWhile(char => (ctype(char) == TknKind.Letter) || (ctype(char) == TknKind.Digit))
           .mkString("")
-//        println(s"ident = ${ident}")
-        parse(list.drop(ident.length), Token(TknKind.Ident, ident.mkString("")) :: acc)
+        //        println(s"ident = ${letters}")
+        parse(list.drop(letters.length), Token(getTkKind(letters), letters.mkString("")) :: acc)
       case TknKind.Digit =>
-        val num = list.takeWhile(ctype(_) == TknKind.Digit).mkString("")
-//        println(s"num = ${num}")
-        parse(list.drop(num.length), Token(TknKind.IntNum, "", num.toInt) :: acc)
+        val digits = list.takeWhile(ctype(_) == TknKind.Digit).mkString("")
+        //        println(s"num = ${num}")
+        parse(list.drop(digits.length), Token(getTkKind(digits), "", digits.toInt) :: acc)
       case TknKind.DblQ =>
-        val literal = list.tail.takeWhile(ctype(_)!= TknKind.DblQ).mkString("")
-//        println(s"literalLength = ${literal.length}")
-        parse(list.drop(literal.length+2), Token(TknKind.String, literal, 0) :: acc)
+        val literal = list.tail.takeWhile(ctype(_) != TknKind.DblQ).mkString("")
+        //        println(s"literalLength = ${literal.length}")
+        parse(list.drop(literal.length + 2), Token(TknKind.String, literal, 0) :: acc)
+      case _ => {
+        val value = list.takeWhile(char => char != ' ' && ctype(char) != TknKind.Letter && ctype(char) != TknKind.Digit).mkString("")
+        //        println(s"value : ${value}")
+        parse(list.drop(value.length), Token(getTkKind(value), value, 0) :: acc)
+      }
+    }
+  }
+
+  def getTkKind(value: String): TknKind.Value = {
+    keyWdTabl.find(value == _.keyName) match {
+      case None => ctype(value.head) match {
+        case TknKind.Letter => TknKind.Ident
+        case TknKind.Digit => TknKind.IntNum
+        case _ => TknKind.Others
+      }
+      case Some(tkKind) => tkKind.keyKind
     }
   }
 }
