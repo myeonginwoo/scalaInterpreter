@@ -24,4 +24,24 @@ class InterpreterTest {
     assertEquals(Token(TknKind.IntNum, "", 456), result(2))
     assertEquals(Token(TknKind.IntNum, "", 7890), result(3))
   }
+
+  @Test def letterAndDigitTest: Unit = {
+    val testText: List[Char] = "1 a23 abc d789".toList
+    Main.initctype()
+    val result = Main.parse(testText, List()).reverse
+    assertEquals(Token(TknKind.IntNum, "", 1), result(0))
+    assertEquals(Token(TknKind.Ident, "a23", 0), result(1))
+    assertEquals(Token(TknKind.Ident, "abc", 0), result(2))
+    assertEquals(Token(TknKind.Ident, "d789", 0), result(3))
+  }
+
+  @Test def stringTest: Unit = {
+    val testText: List[Char] = "1 \"a23\" abc d789".toList
+    Main.initctype()
+    val result = Main.parse(testText, List()).reverse
+    assertEquals(Token(TknKind.IntNum, "", 1), result(0))
+    assertEquals(Token(TknKind.String, "a23", 0), result(1))
+    assertEquals(Token(TknKind.Ident, "abc", 0), result(2))
+    assertEquals(Token(TknKind.Ident, "d789", 0), result(3))
+  }
 }

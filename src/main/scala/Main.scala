@@ -36,7 +36,7 @@ object Main {
     ctype('_') = TknKind.Letter
     ctype('=') = TknKind.Assign
     ctype(',') = TknKind.Comma
-    ctype('>') = TknKind.DblQ
+    ctype('\"') = TknKind.DblQ
   }
 
   val keyWdTabl: List[KeyWord] = List(KeyWord("if", TknKind.If), KeyWord("else", TknKind.Else),
@@ -66,10 +66,16 @@ object Main {
       case TknKind.Letter =>
         val ident = list.takeWhile(char => (ctype(char) == TknKind.Letter) || (ctype(char) == TknKind.Digit))
           .mkString("")
+//        println(s"ident = ${ident}")
         parse(list.drop(ident.length), Token(TknKind.Ident, ident.mkString("")) :: acc)
       case TknKind.Digit =>
         val num = list.takeWhile(ctype(_) == TknKind.Digit).mkString("")
+//        println(s"num = ${num}")
         parse(list.drop(num.length), Token(TknKind.IntNum, "", num.toInt) :: acc)
+      case TknKind.DblQ =>
+        val literal = list.tail.takeWhile(ctype(_)!= TknKind.DblQ).mkString("")
+//        println(s"literalLength = ${literal.length}")
+        parse(list.drop(literal.length+2), Token(TknKind.String, literal, 0) :: acc)
     }
   }
 }
