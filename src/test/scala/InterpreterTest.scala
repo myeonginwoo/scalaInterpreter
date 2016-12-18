@@ -71,4 +71,15 @@ class InterpreterTest {
     assertEquals(Token(TknKind.IntNum, "", 20), result(6))
     assertEquals(Token(TknKind.If, "if", 0), result(7))
   }
+
+  @Test def literalExceptionTest(): Unit = {
+    val testText: List[Char] = "DS \"dafsafdfa".toList
+    Main.initctype()
+
+    try {
+      val result = Main.parse(testText, List()).reverse
+    } catch {
+      case e => assertEquals(e.getMessage, "문자열 리터럴을 닫지 않음")
+    }
+  }
 }

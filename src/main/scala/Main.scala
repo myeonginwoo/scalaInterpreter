@@ -74,6 +74,11 @@ object Main {
         parse(list.drop(digits.length), Token(getTkKind(digits), "", digits.toInt) :: acc)
       case TknKind.DblQ =>
         val literal = list.tail.takeWhile(ctype(_) != TknKind.DblQ).mkString("")
+        println(s"literalLength = ${literal.length}")
+
+        if (literal.length + 1 == list.length) {
+          throw new IllegalArgumentException("문자열 리터럴을 닫지 않음")
+        }
         //        println(s"literalLength = ${literal.length}")
         parse(list.drop(literal.length + 2), Token(TknKind.String, literal, 0) :: acc)
       case _ => {
