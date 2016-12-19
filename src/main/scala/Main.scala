@@ -1,3 +1,4 @@
+import scala.annotation.tailrec
 import scala.io.Source
 
 /**
@@ -54,6 +55,7 @@ object Main {
     ctype('\"') = TknKind.DblQ
   }
 
+  @tailrec
   def parse(list: List[Char], acc: List[Token]): List[Token] = list match {
     case List() => acc
     case ' ' :: _ | '\n' :: _ => parse(list.tail, acc)
