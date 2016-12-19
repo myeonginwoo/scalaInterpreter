@@ -7,10 +7,6 @@ object Main {
 
   var ctype: scala.collection.mutable.MutableList[TknKind.Value] =
     scala.collection.mutable.MutableList.fill(256)(TknKind.Others)
-  var token: Token = _
-  var ch = ' '
-  var c = 0
-  var ch0, num = 0
 
   def initctype(): Unit = {
     for (i <- '0' to '9') {
@@ -54,9 +50,9 @@ object Main {
 
     val source = Source.fromFile("files/test.txt").toList
 
-    println(s"source : ${source.mkString("")}")
-
-    println(s"result : ${parse(source, List()).reverse.mkString("\n")}")
+    println(s"source : \n${source.mkString("")}")
+    println("---------------------------")
+    println(s"result : \n${parse(source, List()).reverse.mkString("\n")}")
   }
 
   def parse(list: List[Char], acc: List[Token]): List[Token] = list match {
@@ -74,8 +70,7 @@ object Main {
         parse(list.drop(digits.length), Token(getTkKind(digits), "", digits.toInt) :: acc)
       case TknKind.DblQ =>
         val literal = list.tail.takeWhile(ctype(_) != TknKind.DblQ).mkString("")
-        println(s"literalLength = ${literal.length}")
-
+        //        println(s"literalLength = ${literal.length}")
         if (literal.length + 1 == list.length) {
           throw new IllegalArgumentException("문자열 리터럴을 닫지 않음")
         }
