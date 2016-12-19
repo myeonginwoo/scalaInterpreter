@@ -8,6 +8,25 @@ object Main {
   var ctype: scala.collection.mutable.MutableList[TknKind.Value] =
     scala.collection.mutable.MutableList.fill(256)(TknKind.Others)
 
+  val keyWdTabl: List[KeyWord] = List(KeyWord("if", TknKind.If), KeyWord("else", TknKind.Else),
+    KeyWord("end", TknKind.End), KeyWord("print", TknKind.Print), KeyWord("(", TknKind.Lparen),
+    KeyWord(")", TknKind.Rparen), KeyWord("+", TknKind.Plus), KeyWord("-", TknKind.Minus),
+    KeyWord("*", TknKind.Multi), KeyWord("/", TknKind.Divi), KeyWord("=", TknKind.Assign),
+    KeyWord(",", TknKind.Comma), KeyWord("==", TknKind.Equal), KeyWord("!=", TknKind.NotEq),
+    KeyWord("<", TknKind.Less), KeyWord("<=", TknKind.LessEq), KeyWord(">", TknKind.Great),
+    KeyWord(">=", TknKind.GreatEq), KeyWord("", TknKind.END_list)
+  )
+
+  def main(args: Array[String]): Unit = {
+    initctype()
+
+    val source = Source.fromFile("files/test.txt").toList
+
+    println(s"source : \n${source.mkString("")}")
+    println("---------------------------")
+    println(s"result : \n${parse(source, List()).reverse.mkString("\n")}")
+  }
+
   def initctype(): Unit = {
     for (i <- '0' to '9') {
       ctype(i) = TknKind.Digit
@@ -33,26 +52,6 @@ object Main {
     ctype('=') = TknKind.Assign
     ctype(',') = TknKind.Comma
     ctype('\"') = TknKind.DblQ
-  }
-
-  val keyWdTabl: List[KeyWord] = List(KeyWord("if", TknKind.If), KeyWord("else", TknKind.Else),
-    KeyWord("end", TknKind.End), KeyWord("print", TknKind.Print), KeyWord("(", TknKind.Lparen),
-    KeyWord(")", TknKind.Rparen), KeyWord("+", TknKind.Plus), KeyWord("-", TknKind.Minus),
-    KeyWord("*", TknKind.Multi), KeyWord("/", TknKind.Divi), KeyWord("=", TknKind.Assign),
-    KeyWord(",", TknKind.Comma), KeyWord("==", TknKind.Equal), KeyWord("!=", TknKind.NotEq),
-    KeyWord("<", TknKind.Less), KeyWord("<=", TknKind.LessEq), KeyWord(">", TknKind.Great),
-    KeyWord(">=", TknKind.GreatEq), KeyWord("", TknKind.END_list)
-  )
-
-  def main(args: Array[String]): Unit = {
-    println("test   kind intVal")
-    initctype()
-
-    val source = Source.fromFile("files/test.txt").toList
-
-    println(s"source : \n${source.mkString("")}")
-    println("---------------------------")
-    println(s"result : \n${parse(source, List()).reverse.mkString("\n")}")
   }
 
   def parse(list: List[Char], acc: List[Token]): List[Token] = list match {
