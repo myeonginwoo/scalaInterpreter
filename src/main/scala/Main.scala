@@ -52,7 +52,7 @@ object Main {
     ctype('_') = TknKind.Letter
     ctype('=') = TknKind.Assign
     ctype(',') = TknKind.Comma
-    ctype('\"') = TknKind.DblQ
+    ctype('"') = TknKind.DblQ
   }
 
   @tailrec
