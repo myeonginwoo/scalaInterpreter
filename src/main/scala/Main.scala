@@ -61,7 +61,8 @@ object Main {
     case ' ' :: _ | '\n' :: _ => parse(list.tail, acc)
     case head :: _ => ctype(head) match {
       case TknKind.Letter =>
-        val letters = list.takeWhile(char => (ctype(char) == TknKind.Letter) || (ctype(char) == TknKind.Digit))
+        val letters = list
+          .takeWhile(char => (ctype(char) == TknKind.Letter) || (ctype(char) == TknKind.Digit))
           .mkString("")
         //        println(s"ident = ${letters}")
         parse(list.drop(letters.length), Token(getTkKind(letters), letters.mkString("")) :: acc)
@@ -77,11 +78,14 @@ object Main {
         }
         //        println(s"literalLength = ${literal.length}")
         parse(list.drop(literal.length + 2), Token(TknKind.String, literal, 0) :: acc)
-      case _ => {
-        val value = list.takeWhile(char => char != ' ' && ctype(char) != TknKind.Letter && ctype(char) != TknKind.Digit).mkString("")
+      case _ =>
+        val value = list
+          .takeWhile(char => char != ' '
+            && ctype(char) != TknKind.Letter
+            && ctype(char) != TknKind.Digit)
+          .mkString("")
         //        println(s"value : ${value}")
-        parse(list.drop(value.length), Token(getTkKind(value), value, 0) :: acc)
-      }
+        parse(list.drop(value.length), Token(getTkKind(value), value) :: acc)
     }
   }
 
