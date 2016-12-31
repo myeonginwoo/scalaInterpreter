@@ -2,10 +2,10 @@
   * Created by Lazysoul on 2016. 12. 18..
   */
 object TknKind extends Enumeration {
-  type tkn = Value
+  //  type tkn = Value
   val Lparen, Rparen, Plus, Minus, Multi, Divi,
-  Assign, Comma, DblQ,
+  Assign, Comma, DblQ, Func, Fcall,
   Equal, NotEq, Less, LessEq, Great, GreatEq,
-  If, Else, End, Print, Ident, IntNum,
+  If, Else, Elif, While, End, Print, Println, Gval, Lval, IntNum, Exit,
   String, Letter, Digit, EofTkn, Others, END_list = Value
 }

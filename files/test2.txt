@@ -1,0 +1,5 @@
+println "aaa"
+func foo()
+  println "bbb"
+end
+println "ccc"
