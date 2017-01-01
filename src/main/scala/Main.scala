@@ -1,4 +1,3 @@
-import scala.annotation.tailrec
 import scala.io.Source
 
 /**
@@ -32,11 +31,12 @@ object Main {
 
     val source = Source.fromFile("files/test3.txt").toList
 
-    val tokens = parseToken(source, List(), 1)
+    val tokens = parseToken(source, List(), 1).groupBy(_.line).toSeq.sortBy(_._1)
     println(s"source : \n${source.mkString("")}")
     println("---------------------------")
     println(s"result : \n${
-      convert(tokens, List())
+      tokens
+        .map(map => convert(map._1, map._2, List()).mkString(""))
         .mkString("\n")
     }")
 
@@ -70,7 +70,7 @@ object Main {
     ctype('"') = TknKind.DblQ
   }
 
-  @tailrec
+  //  @tailrec
   def parseToken(list: List[Char], acc: List[Token], lineNum: Int): List[Token] = list match {
     case List() => acc
     case ' ' :: _ => parseToken(list.tail, acc, lineNum)
@@ -81,22 +81,21 @@ object Main {
           .takeWhile(char => (ctype(char) == TknKind.Letter)
             || ctype(char) == TknKind.Digit)
           .mkString("")
-        if (list.startsWith(letters.toString + "()")) {
+        if (list.startsWith(letters + "()")) {
           parseToken(list.drop(letters.length), acc ::: Token(lineNum, getTkKind(letters.toString + "()"), letters.mkString("")) :: List(), lineNum)
+        } else if (list.startsWith("func")) {
+          parseToken(list.drop(list.indexOf('(')), acc ::: Token(lineNum, getTkKind(letters), letters.mkString("")) :: List(), lineNum)
         } else {
           parseToken(list.drop(letters.length), acc ::: Token(lineNum, getTkKind(letters), letters.mkString("")) :: List(), lineNum)
         }
       case TknKind.Digit =>
         val digits = list.takeWhile(ctype(_) == TknKind.Digit).mkString("")
-        //        println(s"num = ${num}")
         parseToken(list.drop(digits.length), acc ::: Token(lineNum, getTkKind(digits), "", digits.toInt) :: List(), lineNum)
       case TknKind.DblQ =>
         val literal = list.tail.takeWhile(ctype(_) != TknKind.DblQ).mkString("")
-        //        println(s"literalLength = ${literal.length}")
         if (literal.length + 1 == list.length) {
           throw new IllegalArgumentException("문자열 리터럴을 닫지 않음")
         }
-        //        println(s"literalLength = ${literal.length}")
         parseToken(list.drop(literal.length + 2), acc ::: Token(lineNum, TknKind.String, literal) :: List(), lineNum)
       case TknKind.Lparen =>
         parseToken(list.drop(1), acc ::: Token(lineNum, TknKind.Lparen, "(") :: List(), lineNum)
@@ -131,13 +130,14 @@ object Main {
     }
   }
 
-  @tailrec
-  def convert(tokens: List[Token], acc: List[String]): List[String] = tokens match {
+  //  @tailrec
+  def convert(line: Int, tokens: List[Token], acc: List[String]): List[String] = tokens match {
     case List() => acc
     case head :: tail => head.kind match {
       case TknKind.Fcall =>
         val symbol = Symbol(globalSymbolTable.size, head, SymbolKind.fncId)
-        convert(tail, acc ::: symbol.toCode() :: List())
+        globalSymbolTable += symbol
+        convert(line, tail, acc ::: symbol.toCode() :: List())
       case TknKind.Gval =>
         val gSymbol = globalSymbolTable.find(_.token.text == head.text) match {
           case Some(x) => x
@@ -146,7 +146,7 @@ object Main {
             globalSymbolTable += symbol
             symbol
         }
-        convert(tail, acc ::: gSymbol.toCode() :: List())
+        convert(line, tail, acc ::: gSymbol.toCode() :: List())
       case TknKind.Lval =>
         val lSymbol = localSymbolTable.find(_.token.text == head.text) match {
           case Some(x) => x
@@ -155,7 +155,7 @@ object Main {
             localSymbolTable += symbol
             symbol
         }
-        convert(tail, acc ::: lSymbol.toCode() :: List())
+        convert(line, tail, acc ::: lSymbol.toCode() :: List())
       case TknKind.String =>
         val str = stringConstantTable.find(_ == head.text) match {
           case Some(x) => x
@@ -163,7 +163,7 @@ object Main {
             stringConstantTable += head.text
             head.text
         }
-        convert(tail, acc ::: s"[${head.kind.toString}][${stringConstantTable.indexOf(str)}]" :: List())
+        convert(line, tail, acc ::: s"[${head.kind.toString}][${stringConstantTable.indexOf(str)}]" :: List())
       case TknKind.IntNum =>
         val intVal = integerConstantTable.find(_ == head.intVal) match {
           case Some(x) => x
@@ -171,15 +171,15 @@ object Main {
             integerConstantTable += head.intVal
             head.intVal
         }
-        convert(tail, acc ::: s"[${head.kind.toString}][${integerConstantTable.indexOf(intVal)}]" :: List())
-      //    case TknKind.While | TknKind.If | TknKind.Elif | TknKind.For =>
-      //      convertBlockSet()
-      case _ => convert(tail, acc ::: s"[${head.kind.toString}]" :: List())
+        convert(line, tail, acc ::: s"[${head.kind.toString}][${integerConstantTable.indexOf(intVal)}]" :: List())
+      case TknKind.While | TknKind.If | TknKind.Elif | TknKind.For =>
+        convert(line, tail, acc ::: s"[${head.kind.toString}][${}]" :: List())
+      case _ => convert(line, tail, acc ::: s"[${head.kind.toString}]" :: List())
     }
   }
 
-  def convertBlockSet(): Unit = {
-
+  def convertBlockSet(): Int = {
+    0
   }
 
   def convertBlock(): Unit = {
