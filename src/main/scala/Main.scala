@@ -4,7 +4,7 @@ import scala.io.Source
   * Created by Lazysoul on 2016. 12. 15..
   */
 object Main {
-
+  val filePath = "files/test3.txt"
   var ctype: scala.collection.mutable.MutableList[TknKind.Value] =
     scala.collection.mutable.MutableList.fill(256)(TknKind.Others)
 
@@ -29,7 +29,7 @@ object Main {
   def main(args: Array[String]): Unit = {
     initctype()
 
-    val source = Source.fromFile("files/test2.txt").toList
+    val source = Source.fromFile(filePath).toList
 
     val tokens = parseToken(source, List(), 1)
     //    val tokens = parseToken(source, List(), 1).groupBy(_.line).toSeq.sortBy(_._1)
@@ -187,27 +187,15 @@ object Main {
         convert(tail, acc ::: token :: List())
       case TknKind.While | TknKind.If | TknKind.Elif | TknKind.Else | TknKind.For | TknKind.Func =>
         val blockResult = convert(tail, List())
-        println(s"blockResult : $blockResult")
+//        println(s"blockResult : $blockResult")
         token.code = s"[${token.kind.toString}][${blockResult.last.line}]"
         convert(tail.drop(blockResult.size), acc ::: token :: blockResult)
-      case TknKind.End =>
+      case TknKind.End | TknKind.Elif | TknKind.Else =>
         token.code = s"[${token.kind.toString}]"
         acc ::: token :: List()
       case _ =>
         token.code = s"[${token.kind.toString}]"
         convert(tail, acc ::: token :: List())
     }
-  }
-
-  def convertBlockSet(list: List[Token], acc: List[Token]): ((Int, List[Token]), List[Token]) = list.head.kind match {
-    case TknKind.End =>
-      ((list.head.line, list.tail), acc ::: list.head :: List())
-    case _ =>
-      convertBlockSet(convert(list, acc), acc ::: list.head :: List())
-  }
-
-
-  def convertBlock(): Unit = {
-
   }
 }

@@ -1,0 +1,7 @@
+    if a<= 3
+      $sum = $sum + 1
+    elif a<= 6
+      $sum = $sum + 10
+    else
+      $sum = $sum + 100
+    end
