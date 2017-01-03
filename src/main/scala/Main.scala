@@ -29,14 +29,21 @@ object Main {
   def main(args: Array[String]): Unit = {
     initctype()
 
-    val source = Source.fromFile("files/test3.txt").toList
+    val source = Source.fromFile("files/test2.txt").toList
 
-    val tokens = parseToken(source, List(), 1).groupBy(_.line).toSeq.sortBy(_._1)
+    val tokens = parseToken(source, List(), 1)
+    //    val tokens = parseToken(source, List(), 1).groupBy(_.line).toSeq.sortBy(_._1)
     println(s"source : \n${source.mkString("")}")
     println("---------------------------")
     println(s"result : \n${
-      tokens
-        .map(map => convert(map._1, map._2, List()).mkString(""))
+      convert(tokens, List())
+        .groupBy(_.line)
+        .toSeq
+        .sortBy(_._1)
+        .map(sortiedMap => sortiedMap
+          ._2
+          .map(_.code)
+          .mkString(""))
         .mkString("\n")
     }")
 
@@ -112,6 +119,7 @@ object Main {
     }
   }
 
+
   def getTkKind(value: String): TknKind.Value = {
     keyWdTable.find(value == _.keyName) match {
       case None => ctype(value.head) match {
@@ -131,56 +139,73 @@ object Main {
   }
 
   //  @tailrec
-  def convert(line: Int, tokens: List[Token], acc: List[String]): List[String] = tokens match {
+  def convert(list: List[Token], acc: List[Token]): List[Token] = list match {
     case List() => acc
-    case head :: tail => head.kind match {
+    case token :: tail => token.kind match {
       case TknKind.Fcall =>
-        val symbol = Symbol(globalSymbolTable.size, head, SymbolKind.fncId)
+        val symbol = Symbol(globalSymbolTable.size, token, SymbolKind.fncId)
         globalSymbolTable += symbol
-        convert(line, tail, acc ::: symbol.toCode() :: List())
+        token.code = symbol.toCode()
+        convert(tail, acc ::: token :: List())
       case TknKind.Gval =>
-        val gSymbol = globalSymbolTable.find(_.token.text == head.text) match {
+        val gSymbol = globalSymbolTable.find(_.token.text == token.text) match {
           case Some(x) => x
           case None =>
-            val symbol = Symbol(globalSymbolTable.size, head, SymbolKind.varId)
+            val symbol = Symbol(globalSymbolTable.size, token, SymbolKind.varId)
             globalSymbolTable += symbol
             symbol
         }
-        convert(line, tail, acc ::: gSymbol.toCode() :: List())
+        token.code = gSymbol.toCode()
+        convert(tail, acc ::: token :: List())
       case TknKind.Lval =>
-        val lSymbol = localSymbolTable.find(_.token.text == head.text) match {
+        val lSymbol = localSymbolTable.find(_.token.text == token.text) match {
           case Some(x) => x
           case None =>
-            val symbol = Symbol(localSymbolTable.size, head, SymbolKind.varId)
+            val symbol = Symbol(localSymbolTable.size, token, SymbolKind.varId)
             localSymbolTable += symbol
             symbol
         }
-        convert(line, tail, acc ::: lSymbol.toCode() :: List())
+        token.code = lSymbol.toCode()
+        convert(tail, acc ::: token :: List())
       case TknKind.String =>
-        val str = stringConstantTable.find(_ == head.text) match {
+        val str = stringConstantTable.find(_ == token.text) match {
           case Some(x) => x
           case None =>
-            stringConstantTable += head.text
-            head.text
+            stringConstantTable += token.text
+            token.text
         }
-        convert(line, tail, acc ::: s"[${head.kind.toString}][${stringConstantTable.indexOf(str)}]" :: List())
+        token.code = s"[${token.kind.toString}][${stringConstantTable.indexOf(str)}]"
+        convert(tail, acc ::: token :: List())
       case TknKind.IntNum =>
-        val intVal = integerConstantTable.find(_ == head.intVal) match {
+        val intVal = integerConstantTable.find(_ == token.intVal) match {
           case Some(x) => x
           case None =>
-            integerConstantTable += head.intVal
-            head.intVal
+            integerConstantTable += token.intVal
+            token.intVal
         }
-        convert(line, tail, acc ::: s"[${head.kind.toString}][${integerConstantTable.indexOf(intVal)}]" :: List())
-      case TknKind.While | TknKind.If | TknKind.Elif | TknKind.For =>
-        convert(line, tail, acc ::: s"[${head.kind.toString}][${}]" :: List())
-      case _ => convert(line, tail, acc ::: s"[${head.kind.toString}]" :: List())
+        token.code = s"[${token.kind.toString}][${integerConstantTable.indexOf(intVal)}]"
+        convert(tail, acc ::: token :: List())
+      case TknKind.While | TknKind.If | TknKind.Elif | TknKind.Else | TknKind.For | TknKind.Func =>
+        val blockResult = convert(tail, List())
+        println(s"blockResult : $blockResult")
+        token.code = s"[${token.kind.toString}][${blockResult.last.line}]"
+        convert(tail.drop(blockResult.size), acc ::: token :: blockResult)
+      case TknKind.End =>
+        token.code = s"[${token.kind.toString}]"
+        acc ::: token :: List()
+      case _ =>
+        token.code = s"[${token.kind.toString}]"
+        convert(tail, acc ::: token :: List())
     }
   }
 
-  def convertBlockSet(): Int = {
-    0
+  def convertBlockSet(list: List[Token], acc: List[Token]): ((Int, List[Token]), List[Token]) = list.head.kind match {
+    case TknKind.End =>
+      ((list.head.line, list.tail), acc ::: list.head :: List())
+    case _ =>
+      convertBlockSet(convert(list, acc), acc ::: list.head :: List())
   }
+
 
   def convertBlock(): Unit = {
 
